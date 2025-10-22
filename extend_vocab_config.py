@@ -50,7 +50,7 @@ def extend_tokenizer(args):
     existing_tokenizer.model.save(old_tokenizer_path)
 
     # train new tokenizer
-    traindf = pd.read_csv(args.metadata_path, sep="|")
+    traindf = pd.read_csv(args.metadata_path, sep="|", header=None, names=["audio_file_path", "text", "speaker_id"])
     texts = traindf.text.to_list()
 
     new_tokenizer = Tokenizer(BPE())
