@@ -12,3 +12,5 @@ test.py
 cps/
 vivoice-datasets/
 output/
+wavs/
+*.csv
