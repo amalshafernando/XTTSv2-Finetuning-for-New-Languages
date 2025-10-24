@@ -51,8 +51,8 @@ class DVAETrainerArgs:
 
 
 def train(output_path, train_csv_path, eval_csv_path="", language="en", lr=5e-6, num_epochs=5, batch_size=512):
-    dvae_pretrained = os.path.join(output_path, 'XTTS_v2.0_original_model_files/dvae.pth')
-    mel_norm_file = os.path.join(output_path, 'XTTS_v2.0_original_model_files/mel_stats.pth')
+    dvae_pretrained = os.path.join(output_path, 'XTTS-v2/dvae.pth')
+    mel_norm_file = os.path.join(output_path, 'XTTS-v2/mel_stats.pth')
 
     now = datetime.datetime.now()
     now_without_ms = now.replace(microsecond=0)

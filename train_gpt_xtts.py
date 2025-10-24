@@ -78,7 +78,7 @@ def train_gpt(metadatas, num_epochs, batch_size, grad_acumm, output_path, max_au
         DATASETS_CONFIG_LIST.append(config_dataset)
 
     # Define the path where XTTS v2.0.1 files will be downloaded
-    CHECKPOINTS_OUT_PATH = os.path.join(OUT_PATH, "XTTS_v2.0_original_model_files/")
+    CHECKPOINTS_OUT_PATH = os.path.join(OUT_PATH, "XTTS-v2/")
     os.makedirs(CHECKPOINTS_OUT_PATH, exist_ok=True)
 
 

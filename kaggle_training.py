@@ -65,7 +65,7 @@ def download_model_files():
     print("Downloading XTTSv2 model files...")
     
     # Create checkpoints directory
-    checkpoints_dir = "checkpoints/XTTS_v2.0_original_model_files"
+    checkpoints_dir = "checkpoints/XTTS-v2"
     os.makedirs(checkpoints_dir, exist_ok=True)
     
     # Download script
@@ -74,7 +74,7 @@ import os
 from TTS.utils.manage import ModelManager
 
 # Define paths
-CHECKPOINTS_OUT_PATH = "checkpoints/XTTS_v2.0_original_model_files/"
+CHECKPOINTS_OUT_PATH = "checkpoints/XTTS-v2/"
 
 # DVAE files
 DVAE_CHECKPOINT_LINK = "https://coqui.gateway.scarf.sh/hf-coqui/XTTS-v2/main/dvae.pth"
