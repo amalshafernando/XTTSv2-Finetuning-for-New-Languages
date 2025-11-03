@@ -56,7 +56,12 @@ def extend_tokenizer(args):
     new_tokenizer = Tokenizer(BPE())
     new_tokenizer.pre_tokenizer = Whitespace()
 
-    trainer = BpeTrainer(special_tokens=[f"[{args.language}]"], vocab_size=args.extended_vocab_size)
+    # Loosen freq to ensure Sinhala chars make it in; add language tag explicitly
+    trainer = BpeTrainer(
+        special_tokens=[f"[{args.language}]"],
+        vocab_size=args.extended_vocab_size,
+        min_frequency=1
+    )
     new_tokenizer.train_from_iterator(iter(texts), trainer=trainer)
     new_tokenizer.add_special_tokens([f"[{args.language}]"])
 
@@ -71,12 +76,12 @@ def extend_tokenizer(args):
         merged_tokenizer_path
     )
 
-    tokenizer = Tokenizer.from_file(os.path.join(root, "vocab.json"))
-    tokenizer.model = tokenizer.model.from_file(os.path.join(merged_tokenizer_path, 'vocab.json'), os.path.join(merged_tokenizer_path, 'merges.txt'))
-    tokenizer.add_special_tokens([f"[{args.language}]"])
+    # IMPORTANT: Overwrite XTTS-v2 with the merged model files (token->id JSON + merges.txt)
+    import shutil
+    shutil.copy(os.path.join(merged_tokenizer_path, "vocab.json"), os.path.join(root, "vocab.json"))
+    shutil.copy(os.path.join(merged_tokenizer_path, "merges.txt"), os.path.join(root, "merges.txt"))
 
-    tokenizer.save(os.path.join(root, "vocab.json"))
-
+    # Cleanup
     os.system(f'rm -rf {old_tokenizer_path} {new_tokenizer_path} {merged_tokenizer_path}')
 
 def adjust_config(args):
