@@ -2,7 +2,6 @@
 
 This guide provides instructions for finetuning XTTSv2 on a new language, using Vietnamese (`vi`) as an example.
 
-[UPDATE] A finetuned model for Vietnamese is now available at [anhnh2002/vnTTS](https://huggingface.co/anhnh2002/vnTTS) on Hugging Face
 
 
 ## Table of Contents
@@ -19,7 +18,7 @@ This guide provides instructions for finetuning XTTSv2 on a new language, using 
 First, clone the repository and install the necessary dependencies:
 
 ```
-git clone https://github.com/nguyenhoanganh2002/XTTSv2-Finetuning-for-New-Languages.git
+git clone https://github.com/amalshafernando/XTTSv2-Finetuning-for-New-Languages.git
 cd XTTSv2-Finetuning-for-New-Languages
 pip install -r requirements.txt
 ```

@@ -19,7 +19,16 @@ class SpeakerManager():
 
 class LanguageManager():
     def __init__(self, config):
-        self.langs = config["languages"]
+        # config may be a dict (loaded JSON) or a Coqpit/XttsConfig object.
+        # Support both forms to be robust when called from notebooks or scripts.
+        try:
+            # prefer attribute access when available
+            self.langs = getattr(config, "languages")
+            if self.langs is None:
+                raise AttributeError()
+        except Exception:
+            # fallback to dict-like access
+            self.langs = config["languages"]
 
     @property
     def name_to_id(self):

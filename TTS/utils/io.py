@@ -41,6 +41,11 @@ def load_fsspec(
     Returns:
         Object stored in path.
     """
+    # Add weights_only=False to kwargs if not explicitly set
+    # This fixes PyTorch 2.6 compatibility issue where weights_only defaults to True
+    if 'weights_only' not in kwargs:
+        kwargs['weights_only'] = False
+    
     is_local = os.path.isdir(path) or os.path.isfile(path)
     if cache and not is_local:
         with fsspec.open(
