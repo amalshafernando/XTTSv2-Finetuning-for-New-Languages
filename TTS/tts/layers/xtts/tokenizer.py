@@ -569,6 +569,25 @@ def basic_cleaners(text):
     return text
 
 
+def sinhala_cleaners(text):
+    """
+    Sinhala-specific text preprocessing.
+    Keeps Sinhala Unicode characters (U+0D80-U+0DFF), digits, space, and basic punctuation.
+    Avoids multilingual number/abbreviation expansion.
+    """
+    import re
+    # Normalize whitespace
+    text = re.sub(r"\s+", " ", text).strip()
+    # Keep Sinhala chars + digits + spaces + common punctuation
+    allowed = r"[\u0D80-\u0DFF\d\s\-\.\!\?;:,\'\"()]"
+    text = "".join(c for c in text if re.match(allowed, c))
+    # Normalize spaces around punctuation
+    text = re.sub(r"\s+([?.!,;:])", r"\1", text)
+    text = re.sub(r"([?.!,;:])\s*", r"\1 ", text)
+    text = re.sub(r"\s+", " ", text).strip()
+    return text
+
+
 def chinese_transliterate(text):
     return "".join(
         [p[0] for p in pypinyin.pinyin(text, style=pypinyin.Style.TONE3, heteronym=False, neutral_tone_with_five=True)]
@@ -611,7 +630,7 @@ class VoiceBpeTokenizer:
             "ja": 71,
             "hu": 224,
             "ko": 95,
-            "si": 300,
+            "si": 280,
         }
 
     @cached_property
@@ -640,9 +659,10 @@ class VoiceBpeTokenizer:
         elif lang == "hi":
             # @manmay will implement this
             txt = basic_cleaners(txt)
+        elif lang == "si":
+            txt = sinhala_cleaners(txt)
         else:
             txt = basic_cleaners(txt)
-            # print(f"[!] Warning: Preprocess [Language '{lang}'] text is not implemented, use `basic_cleaners` instead.")
         return txt
 
     def encode(self, txt, lang):
