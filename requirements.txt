@@ -35,3 +35,4 @@ matplotlib>=3.7.0
 # Optional: Remove problematic packages for Kaggle
 # gruut[de,es,fr]==2.2.3  # Comment out if causing issues
 # spacy[ja]>=3  # Comment out if causing issues
+sinling

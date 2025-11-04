@@ -6,43 +6,31 @@ import os
 import argparse
 import pandas as pd
 from collections import Counter
-
-def extract_sinhala_characters(text):
-    """Extract only Sinhala Unicode characters (U+0D80-U+0DFF)"""
-    sinhala_chars = []
-    for char in text:
-        code_point = ord(char)
-        if 0x0D80 <= code_point <= 0x0DFF:
-            sinhala_chars.append(char)
-    return sinhala_chars
+from sinling import SinhalaTokenizer
 
 def create_sinhala_vocab(metadata_path, output_path, vocab_size=2500):
-    """Create BPE vocabulary specifically for Sinhala"""
+    """Create BPE vocabulary specifically for Sinhala using sinling tokenizer"""
+
+    # Initialize the tokenizer
+    tokenizer = SinhalaTokenizer()
     
     # Read metadata
     df = pd.read_csv(metadata_path, sep="|", header=None,
                      names=["audio_file", "text", "speaker"])
     texts = df.text.tolist()
     
-    print(f"Processing {len(texts)} Sinhala texts...")
+    print(f"Processing {len(texts)} Sinhala texts with sinling tokenizer...")
     
-    # Extract character-level vocabulary
-    char_freq = Counter()
-    bigram_freq = Counter()
-    word_freq = Counter()
-    
+    # Tokenize all texts and create a flat list of tokens
+    all_tokens = []
     for text in texts:
-        sinhala_text = ''.join(extract_sinhala_characters(text))
+        tokens = tokenizer.tokenize(text)
+        all_tokens.extend(tokens)
         
-        for char in sinhala_text:
-            char_freq[char] += 1
-        
-        for i in range(len(sinhala_text) - 1):
-            bigram = sinhala_text[i:i+2]
-            bigram_freq[bigram] += 1
-        
-        for word in text.split():
-            word_freq[word] += 1
+    # Calculate token frequencies
+    token_freq = Counter(all_tokens)
+
+    print(f"Found {len(token_freq)} unique Sinhala tokens.")
     
     # Build vocabulary
     vocab = {}
@@ -54,33 +42,15 @@ def create_sinhala_vocab(metadata_path, output_path, vocab_size=2500):
         vocab[token] = idx
         idx += 1
     
-    # Add all Sinhala characters
-    print(f"Found {len(char_freq)} unique Sinhala characters")
-    for char in sorted(char_freq.keys(), key=lambda x: char_freq[x], reverse=True):
-        vocab[char] = idx
-        idx += 1
-        if idx >= vocab_size * 0.7:
-            break
+    # Add most common tokens from the dataset
+    # Sort tokens by frequency in descending order
+    most_common_tokens = token_freq.most_common(vocab_size - len(special_tokens))
     
-    # Add high-frequency bigrams (✅ FIX: Use x[1] for count)
-    print(f"Found {len(bigram_freq)} unique bigrams")
-    for bigram, count in sorted(bigram_freq.items(),
-                                key=lambda x: x[1], reverse=True):  # ✅ FIXED
-        if idx >= vocab_size:
-            break
-        if bigram not in vocab and count >= 2:
-            vocab[bigram] = idx
+    for token, freq in most_common_tokens:
+        if token not in vocab:
+            vocab[token] = idx
             idx += 1
-    
-    # Add common words
-    for word, count in sorted(word_freq.items(),
-                              key=lambda x: x[1], reverse=True):  # ✅ FIXED
-        if idx >= vocab_size:
-            break
-        if word not in vocab and count >= 1:
-            vocab[word] = idx
-            idx += 1
-    
+
     print(f"✅ Final vocabulary size: {len(vocab)} tokens")
     
     # Save vocabulary
@@ -96,8 +66,7 @@ def create_sinhala_vocab(metadata_path, output_path, vocab_size=2500):
     # Statistics
     print(f"\n📊 Vocabulary Statistics:")
     print(f"   - Special tokens: {len(special_tokens)}")
-    print(f"   - Sinhala characters: {len(char_freq)}")
-    print(f"   - Character bigrams: {sum(1 for b in bigram_freq if bigram_freq[b] >= 2)}")
+    print(f"   - Sinhala tokens from sinling: {len(most_common_tokens)}")
     print(f"   - Total: {len(vocab)} tokens")
     
     return vocab_path
@@ -112,33 +81,35 @@ def adjust_config(args):
         if "languages" not in config:
             config["languages"] = []
         
+        # Add 'si' if it's not already in the list
         if "si" not in config["languages"]:
             config["languages"].append("si")
         
+        # Update the number of text tokens to match the new vocab size
         if "model_args" in config:
-            config["model_args"]["gpt_num_text_tokens"] = args.vocab_size
+            config["model_args"]["gpt_num_text_tokens"] = len(json.load(open(os.path.join(args.output_path, "XTTS-v2/vocab.json"))))
+            config["model_args"]["gpt_start_text_token"] = 2  # Assuming [START] is at index 2
+            config["model_args"]["gpt_stop_text_token"] = 3   # Assuming [STOP] is at index 3
         
         with open(config_path, 'w', encoding='utf-8') as f:
             json.dump(config, f, indent=4, ensure_ascii=False)
         
-        print(f"✅ Updated config.json with language 'si'")
+        print(f"✅ Updated config.json with language 'si' and new vocab size.")
     except Exception as e:
         print(f"⚠️ Could not update config.json: {e}")
 
 if __name__ == "__main__":
-    # ✅ FIXED: Correct argument parser with right arguments
-    parser = argparse.ArgumentParser(description="Create Sinhala vocabulary for XTTS")
+    parser = argparse.ArgumentParser(description="Create Sinhala vocabulary for XTTS using sinling tokenizer.")
     
     parser.add_argument("--metadata_path", type=str, required=True,
-                       help="Path to metadata_train.csv")
+                       help="Path to the training metadata CSV file.")
     parser.add_argument("--output_path", type=str, default="checkpoints/",
-                       help="Output directory")
+                       help="Directory to save the output vocab.json and config.json.")
     parser.add_argument("--vocab_size", type=int, default=2500,
-                       help="Target vocabulary size")
+                       help="The target size of the vocabulary.")
     
     args = parser.parse_args()
     
-    # ✅ FIXED: Call the correct function
     vocab_path = create_sinhala_vocab(
         args.metadata_path,
         args.output_path,
@@ -148,4 +119,4 @@ if __name__ == "__main__":
     adjust_config(args)
     
     print(f"\n✅ Sinhala tokenization complete!")
-    print(f"   Use vocab.json in your XTTS training config")
+    print(f"   A new vocab.json and updated config.json have been saved in {args.output_path}/XTTS-v2/")
